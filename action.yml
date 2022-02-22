@@ -1,0 +1,41 @@
+name: 'yc-cli-install'
+description: 'deploy'
+inputs:
+  SA_KEY:
+    description: 'Yandex cloud service account private key. No logging in if parameter is not provided.'
+    required: false
+    default: ''
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get latest yc version number
+      shell: bash
+      id: version
+      run:
+        echo "::set-output name=value::`curl -s --fail https://storage.yandexcloud.net/yandexcloud-yc/release/stable`"
+
+    - name: Cache yc binary
+      uses: actions/cache@v2
+      id: cache-yc-cli
+      with:
+        path: /usr/local/bin/yc
+        key: yc-cli-${{ steps.version.outputs.value }}
+
+    - name: Get yc binary if cache miss
+      if: steps.cache-yc-cli.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        echo Downloading yc cli version ${{ steps.version.outputs.value }}
+        sudo curl --fail "https://storage.yandexcloud.net/yandexcloud-yc/release/${{ steps.version.outputs.value }}/linux/amd64/yc" -o /usr/local/bin/yc
+
+    - name: Set permissions for yc cli binary
+      shell: bash
+      run:
+        sudo chmod a+rx /usr/local/bin/yc
+
+    - name: Authorize service account
+      if: ${{ inputs.SA_KEY }}
+      shell: bash
+      run:
+        yc config set service-account-key <(echo '${{ inputs.SA_KEY }}')
