@@ -16,7 +16,7 @@ runs:
         echo "::set-output name=value::`curl -s --fail https://storage.yandexcloud.net/yandexcloud-yc/release/stable`"
 
     - name: Cache yc binary
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       id: cache-yc-cli
       with:
         path: /usr/local/bin/yc
